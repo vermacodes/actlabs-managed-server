@@ -57,5 +57,5 @@ az containerapp create --name actlabs-managed-server \
   --min-replicas 1 \
   --max-replicas 1 \
   --target-port 80 \
-  --env-vars "AZURE_CLIENT_ID=$AZURE_CLIENT_ID" "AZURE_CLIENT_SECRET=secretref:azure-client-secret" "AZURE_TENANT_ID=$AZURE_TENANT_ID" "LOG_LEVEL=$LOG_LEVEL" \
+  --env-vars "AUTH_TOKEN_ISS=$AUTH_TOKEN_ISS" "AUTH_TOKEN_AUD=$AUTH_TOKEN_AUD" "AZURE_CLIENT_ID=$AZURE_CLIENT_ID" "AZURE_CLIENT_SECRET=secretref:azure-client-secret" "AZURE_TENANT_ID=$AZURE_TENANT_ID" "LOG_LEVEL=$LOG_LEVEL" \
   --secrets "azure-client-secret=$AZURE_CLIENT_SECRET"
