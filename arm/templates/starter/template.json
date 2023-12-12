@@ -22,6 +22,13 @@
       "metadata": {
         "description": "Azure Region the resource group will be created in."
       }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "iv3p7230nbdw",
+      "metadata": {
+        "description": "Name of the storage account to create."
+      }
     }
   },
   "resources": [
@@ -30,7 +37,45 @@
       "apiVersion": "2022-09-01",
       "name": "[parameters('rgName')]",
       "location": "[parameters('rgLocation')]"
-    }
+    },
+    {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2023-01-01",
+            "name": "[parameters('storageAccountName')]",
+            "location": "eastus",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "defaultToOAuthAuthentication": false,
+                "minimumTlsVersion": "TLS1_0",
+                "allowBlobPublicAccess": false,
+                "allowSharedKeyAccess": true,
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "virtualNetworkRules": [],
+                    "ipRules": [],
+                    "defaultAction": "Allow"
+                },
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                    "services": {
+                        "file": {
+                            "keyType": "Account",
+                            "enabled": true
+                        },
+                        "blob": {
+                            "keyType": "Account",
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "accessTier": "Hot"
+            }
+        }
   ]
 }
 
