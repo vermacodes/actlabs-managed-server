@@ -1,15 +1,20 @@
 #!/bin/bash
 
 ACTLABS_APP_ID="00399ddd-434c-4b8a-84be-d096cff4f494"
-RESOURCE_GROUP="actlabs-managed-rg"
+RESOURCE_GROUP="repro-project"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
 # Function to log messages
 err() {
     echo -e "${RED}[$(date +'%Y-%m-%dT%H:%M:%S%z')]: ERROR - $* ${NC}" >&1
+}
+
+warn() {
+    echo -e "${YELLOW}[$(date +'%Y-%m-%dT%H:%M:%S%z')]: WARNING - $* ${NC}" >&1
 }
 
 log() {
@@ -22,6 +27,35 @@ ok() {
 
 gap() {
     echo >&1
+}
+
+# Function that sleeps for a specified number of seconds
+function sleep_with_progress() {
+    local TOTAL_SECONDS=$1
+    local MESSAGE=$2 # optional; if provided, will be printed before the countdown
+
+    # Check if TOTAL_SECONDS is a positive integer
+    if ! [[ "$TOTAL_SECONDS" =~ ^[0-9]+$ ]]; then
+        log "Error: Invalid number of seconds"
+        return 1
+    fi
+
+    if [[ -n "${MESSAGE}" ]]; then
+        ok "${MESSAGE}"
+    fi
+
+    local MINUTES=$((TOTAL_SECONDS / 60))
+    local SECONDS_REMAINING=$((TOTAL_SECONDS % 60))
+    log "Sleeping for ${MINUTES} minutes and ${SECONDS_REMAINING} seconds..."
+
+    while [[ ${TOTAL_SECONDS} -gt 0 ]]; do
+        MINUTES=$((TOTAL_SECONDS / 60))
+        SECONDS_REMAINING=$((TOTAL_SECONDS % 60))
+        log "${MINUTES} minutes and ${SECONDS_REMAINING} seconds remaining"
+        sleep 10
+        TOTAL_SECONDS=$((TOTAL_SECONDS - 10))
+        log "Seconds remaining: ${TOTAL_SECONDS}"
+    done
 }
 
 # Function to handle errors
@@ -176,6 +210,7 @@ function create_managed_identity() {
             return 1
         else
             log "managed identity ${USER_ALIAS}-msi created"
+            sleep_with_progress 120 "Waiting for the managed identity to be created and synced to Azure AD"
         fi
     fi
 
