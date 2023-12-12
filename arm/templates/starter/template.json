@@ -2,11 +2,19 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "resourceGroup": {
+        "resourceGroup_name": {
             "type": "string",
             "defaultValue": "repro-project",
+
             "metadata": {
                 "description": "The name of the resource group."
+            }
+        },
+        "resourceGroup_location": {
+            "type": "string",
+            "defaultValue": "eastus",
+            "metadata": {
+                "description": "The location of the resource group."
             }
         },
         "storageAccounts_name": {
@@ -24,6 +32,12 @@
     },
     "variables": {},
     "resources": [
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2022-09-01",
+            "name": "[parameters('resourceGroup_name')]",
+            "location": "[parameters('resourceGroup_location')]"
+        },
         {
             "type": "Microsoft.KeyVault/vaults",
             "apiVersion": "2023-07-01",
