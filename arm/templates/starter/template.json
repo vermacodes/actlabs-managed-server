@@ -1,44 +1,44 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
-  "metadata": {
-    "_generator": {
-      "name": "bicep",
-      "version": "0.20.4.51522",
-      "templateHash": "7831916033916286802"
-    }
-  },
-  "parameters": {
-    "rgName": {
-      "type": "string",
-	  "defaultValue": "repro-project",
-      "metadata": {
-        "description": "Name of the resource group to create."
-      }
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "metadata": {
+        "_generator": {
+            "name": "bicep",
+            "version": "0.20.4.51522",
+            "templateHash": "7831916033916286802"
+        }
     },
-    "rgLocation": {
-      "type": "string",
-      "defaultValue": "[deployment().location]",
-      "metadata": {
-        "description": "Azure Region the resource group will be created in."
-      }
+    "parameters": {
+        "rgName": {
+            "type": "string",
+            "defaultValue": "repro-project",
+            "metadata": {
+                "description": "Name of the resource group to create."
+            }
+        },
+        "rgLocation": {
+            "type": "string",
+            "defaultValue": "[deployment().location]",
+            "metadata": {
+                "description": "Azure Region the resource group will be created in."
+            }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": "iv3p7230nbdw",
+            "metadata": {
+                "description": "Name of the storage account to create."
+            }
+        }
     },
-    "storageAccountName": {
-      "type": "string",
-      "defaultValue": "iv3p7230nbdw",
-      "metadata": {
-        "description": "Name of the storage account to create."
-      }
-    }
-  },
-  "resources": [
-    {
-      "type": "Microsoft.Resources/resourceGroups",
-      "apiVersion": "2022-09-01",
-      "name": "[parameters('rgName')]",
-      "location": "[parameters('rgLocation')]"
-    },
-    {
+    "resources": [
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2022-09-01",
+            "name": "[parameters('rgName')]",
+            "location": "[parameters('rgLocation')]"
+        },
+        {
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2023-01-01",
             "name": "[parameters('storageAccountName')]",
@@ -48,6 +48,9 @@
                 "tier": "Standard"
             },
             "kind": "StorageV2",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups', parameters('rgName'))]"
+            ],
             "properties": {
                 "defaultToOAuthAuthentication": false,
                 "minimumTlsVersion": "TLS1_0",
@@ -76,7 +79,7 @@
                 "accessTier": "Hot"
             }
         }
-  ]
+    ]
 }
 
 // {
