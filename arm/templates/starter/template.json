@@ -1,288 +1,324 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-        "resourceGroup_name": {
-            "type": "string",
-            "defaultValue": "repro-project",
-
-            "metadata": {
-                "description": "The name of the resource group."
-            }
-        },
-        "resourceGroup_location": {
-            "type": "string",
-            "defaultValue": "eastus",
-            "metadata": {
-                "description": "The location of the resource group."
-            }
-        },
-        "storageAccounts_name": {
-            "defaultValue": "iv3p7230nbdw",
-            "type": "String"
-        },
-        "vaults_name": {
-            "defaultValue": "ashisverma-kv-7c9503b0",
-            "type": "String"
-        },
-        "userAssignedIdentities_name": {
-            "defaultValue": "ashisverma-msi",
-            "type": "String"
-        }
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.20.4.51522",
+      "templateHash": "7831916033916286802"
+    }
+  },
+  "parameters": {
+    "rgName": {
+      "type": "string",
+	  "defaultValue": "repro-project",
+      "metadata": {
+        "description": "Name of the resource group to create."
+      }
     },
-    "variables": {},
-    "resources": [
-        {
-            "type": "Microsoft.Resources/resourceGroups",
-            "apiVersion": "2022-09-01",
-            "name": "[parameters('resourceGroup_name')]",
-            "location": "[parameters('resourceGroup_location')]"
-        },
-        {
-            "type": "Microsoft.KeyVault/vaults",
-            "apiVersion": "2023-07-01",
-            "name": "[parameters('vaults_name')]",
-            "location": "eastus",
-            "dependsOn": [
-                "[resourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroup_name'))]"
-            ],
-            "properties": {
-                "sku": {
-                    "family": "A",
-                    "name": "standard"
-                },
-                "tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
-                "accessPolicies": [
-                    {
-                        "tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
-                        "objectId": "7f327f20-3e1c-4f18-a06b-6c17603e5fca",
-                        "permissions": {
-                            "keys": [
-                                "all"
-                            ],
-                            "secrets": [
-                                "restore",
-                                "backup",
-                                "recover",
-                                "get",
-                                "purge",
-                                "set",
-                                "list",
-                                "delete"
-                            ],
-                            "certificates": [
-                                "all"
-                            ],
-                            "storage": [
-                                "all"
-                            ]
-                        }
-                    }
-                ],
-                "enabledForDeployment": false,
-                "enableSoftDelete": true,
-                "softDeleteRetentionInDays": 90,
-                "vaultUri": "[concat('https://', parameters('vaults_name'), '.vault.azure.net/')]",
-                "provisioningState": "Succeeded",
-                "publicNetworkAccess": "Enabled"
-            }
-        },
-        {
-            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-            "apiVersion": "2023-01-31",
-            "name": "[parameters('userAssignedIdentities_name')]",
-            "location": "eastus"
-        },
-        {
-            "type": "Microsoft.Storage/storageAccounts",
-            "apiVersion": "2023-01-01",
-            "name": "[parameters('storageAccounts_name')]",
-            "location": "eastus",
-            "sku": {
-                "name": "Standard_LRS",
-                "tier": "Standard"
-            },
-            "kind": "StorageV2",
-            "properties": {
-                "defaultToOAuthAuthentication": false,
-                "minimumTlsVersion": "TLS1_0",
-                "allowBlobPublicAccess": false,
-                "allowSharedKeyAccess": true,
-                "networkAcls": {
-                    "bypass": "AzureServices",
-                    "virtualNetworkRules": [],
-                    "ipRules": [],
-                    "defaultAction": "Allow"
-                },
-                "supportsHttpsTrafficOnly": true,
-                "encryption": {
-                    "services": {
-                        "file": {
-                            "keyType": "Account",
-                            "enabled": true
-                        },
-                        "blob": {
-                            "keyType": "Account",
-                            "enabled": true
-                        }
-                    },
-                    "keySource": "Microsoft.Storage"
-                },
-                "accessTier": "Hot"
-            }
-        },
-        {
-            "type": "Microsoft.KeyVault/vaults/secrets",
-            "apiVersion": "2023-07-01",
-            "name": "[concat(parameters('vaults_name'), '/arm-client-id')]",
-            "location": "eastus",
-            "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/vaults', parameters('vaults_name'))]"
-            ],
-            "tags": {
-                "file-encoding": "utf-8"
-            },
-            "properties": {
-                "attributes": {
-                    "enabled": true
-                }
-            }
-        },
-        {
-            "type": "Microsoft.KeyVault/vaults/secrets",
-            "apiVersion": "2023-07-01",
-            "name": "[concat(parameters('vaults_name'), '/arm-client-secret')]",
-            "location": "eastus",
-            "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/vaults', parameters('vaults_name'))]"
-            ],
-            "tags": {
-                "file-encoding": "utf-8"
-            },
-            "properties": {
-                "attributes": {
-                    "enabled": true
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Storage/storageAccounts/blobServices",
-            "apiVersion": "2023-01-01",
-            "name": "[concat(parameters('storageAccounts_name'), '/default')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_name'))]"
-            ],
-            "sku": {
-                "name": "Standard_LRS",
-                "tier": "Standard"
-            },
-            "properties": {
-                "cors": {
-                    "corsRules": []
-                },
-                "deleteRetentionPolicy": {
-                    "allowPermanentDelete": false,
-                    "enabled": false
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Storage/storageAccounts/fileServices",
-            "apiVersion": "2023-01-01",
-            "name": "[concat(parameters('storageAccounts_name'), '/default')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_name'))]"
-            ],
-            "sku": {
-                "name": "Standard_LRS",
-                "tier": "Standard"
-            },
-            "properties": {
-                "protocolSettings": {
-                    "smb": {}
-                },
-                "cors": {
-                    "corsRules": []
-                },
-                "shareDeleteRetentionPolicy": {
-                    "enabled": true,
-                    "days": 7
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Storage/storageAccounts/queueServices",
-            "apiVersion": "2023-01-01",
-            "name": "[concat(parameters('storageAccounts_name'), '/default')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_name'))]"
-            ],
-            "properties": {
-                "cors": {
-                    "corsRules": []
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Storage/storageAccounts/tableServices",
-            "apiVersion": "2023-01-01",
-            "name": "[concat(parameters('storageAccounts_name'), '/default')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_name'))]"
-            ],
-            "properties": {
-                "cors": {
-                    "corsRules": []
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
-            "apiVersion": "2023-01-01",
-            "name": "[concat(parameters('storageAccounts_name'), '/default/labs')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccounts_name'), 'default')]",
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_name'))]"
-            ],
-            "properties": {
-                "immutableStorageWithVersioning": {
-                    "enabled": false
-                },
-                "defaultEncryptionScope": "$account-encryption-key",
-                "denyEncryptionScopeOverride": false,
-                "publicAccess": "None"
-            }
-        },
-        {
-            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
-            "apiVersion": "2023-01-01",
-            "name": "[concat(parameters('storageAccounts_name'), '/default/tfstate')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccounts_name'), 'default')]",
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_name'))]"
-            ],
-            "properties": {
-                "immutableStorageWithVersioning": {
-                    "enabled": false
-                },
-                "defaultEncryptionScope": "$account-encryption-key",
-                "denyEncryptionScopeOverride": false,
-                "publicAccess": "None"
-            }
-        },
-        {
-            "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
-            "apiVersion": "2023-01-01",
-            "name": "[concat(parameters('storageAccounts_name'), '/default/fileshare')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts/fileServices', parameters('storageAccounts_name'), 'default')]",
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_name'))]"
-            ],
-            "properties": {
-                "accessTier": "TransactionOptimized",
-                "shareQuota": 5120,
-                "enabledProtocols": "SMB"
-            }
-        }
-    ]
+    "rgLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().location]",
+      "metadata": {
+        "description": "Azure Region the resource group will be created in."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2022-09-01",
+      "name": "[parameters('rgName')]",
+      "location": "[parameters('rgLocation')]"
+    }
+  ]
 }
+
+// {
+//     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+//     "contentVersion": "1.0.0.0",
+//     "parameters": {
+//         "resourceGroup_name": {
+//             "type": "string",
+//             "defaultValue": "repro-project",
+
+//             "metadata": {
+//                 "description": "The name of the resource group."
+//             }
+//         },
+//         "resourceGroup_location": {
+//             "type": "string",
+//             "defaultValue": "eastus",
+//             "metadata": {
+//                 "description": "The location of the resource group."
+//             }
+//         },
+//         "storageAccounts_name": {
+//             "defaultValue": "iv3p7230nbdw",
+//             "type": "String"
+//         },
+//         "vaults_name": {
+//             "defaultValue": "ashisverma-kv-7c9503b0",
+//             "type": "String"
+//         },
+//         "userAssignedIdentities_name": {
+//             "defaultValue": "ashisverma-msi",
+//             "type": "String"
+//         }
+//     },
+//     "variables": {},
+//     "resources": [
+//         {
+//             "type": "Microsoft.Resources/resourceGroups",
+//             "apiVersion": "2022-09-01",
+//             "name": "[parameters('resourceGroup_name')]",
+//             "location": "[parameters('resourceGroup_location')]"
+//         },
+//         {
+//             "type": "Microsoft.KeyVault/vaults",
+//             "apiVersion": "2023-07-01",
+//             "name": "[parameters('vaults_name')]",
+//             "location": "eastus",
+//             "dependsOn": [
+//                 "[resourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroup_name'))]"
+//             ],
+//             "properties": {
+//                 "sku": {
+//                     "family": "A",
+//                     "name": "standard"
+//                 },
+//                 "tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+//                 "accessPolicies": [
+//                     {
+//                         "tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+//                         "objectId": "7f327f20-3e1c-4f18-a06b-6c17603e5fca",
+//                         "permissions": {
+//                             "keys": [
+//                                 "all"
+//                             ],
+//                             "secrets": [
+//                                 "restore",
+//                                 "backup",
+//                                 "recover",
+//                                 "get",
+//                                 "purge",
+//                                 "set",
+//                                 "list",
+//                                 "delete"
+//                             ],
+//                             "certificates": [
+//                                 "all"
+//                             ],
+//                             "storage": [
+//                                 "all"
+//                             ]
+//                         }
+//                     }
+//                 ],
+//                 "enabledForDeployment": false,
+//                 "enableSoftDelete": true,
+//                 "softDeleteRetentionInDays": 90,
+//                 "vaultUri": "[concat('https://', parameters('vaults_name'), '.vault.azure.net/')]",
+//                 "provisioningState": "Succeeded",
+//                 "publicNetworkAccess": "Enabled"
+//             }
+//         },
+//         {
+//             "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+//             "apiVersion": "2023-01-31",
+//             "name": "[parameters('userAssignedIdentities_name')]",
+//             "location": "eastus"
+//         },
+//         {
+//             "type": "Microsoft.Storage/storageAccounts",
+//             "apiVersion": "2023-01-01",
+//             "name": "[parameters('storageAccounts_name')]",
+//             "location": "eastus",
+//             "sku": {
+//                 "name": "Standard_LRS",
+//                 "tier": "Standard"
+//             },
+//             "kind": "StorageV2",
+//             "properties": {
+//                 "defaultToOAuthAuthentication": false,
+//                 "minimumTlsVersion": "TLS1_0",
+//                 "allowBlobPublicAccess": false,
+//                 "allowSharedKeyAccess": true,
+//                 "networkAcls": {
+//                     "bypass": "AzureServices",
+//                     "virtualNetworkRules": [],
+//                     "ipRules": [],
+//                     "defaultAction": "Allow"
+//                 },
+//                 "supportsHttpsTrafficOnly": true,
+//                 "encryption": {
+//                     "services": {
+//                         "file": {
+//                             "keyType": "Account",
+//                             "enabled": true
+//                         },
+//                         "blob": {
+//                             "keyType": "Account",
+//                             "enabled": true
+//                         }
+//                     },
+//                     "keySource": "Microsoft.Storage"
+//                 },
+//                 "accessTier": "Hot"
+//             }
+//         },
+//         {
+//             "type": "Microsoft.KeyVault/vaults/secrets",
+//             "apiVersion": "2023-07-01",
+//             "name": "[concat(parameters('vaults_name'), '/arm-client-id')]",
+//             "location": "eastus",
+//             "dependsOn": [
+//                 "[resourceId('Microsoft.KeyVault/vaults', parameters('vaults_name'))]"
+//             ],
+//             "tags": {
+//                 "file-encoding": "utf-8"
+//             },
+//             "properties": {
+//                 "attributes": {
+//                     "enabled": true
+//                 }
+//             }
+//         },
+//         {
+//             "type": "Microsoft.KeyVault/vaults/secrets",
+//             "apiVersion": "2023-07-01",
+//             "name": "[concat(parameters('vaults_name'), '/arm-client-secret')]",
+//             "location": "eastus",
+//             "dependsOn": [
+//                 "[resourceId('Microsoft.KeyVault/vaults', parameters('vaults_name'))]"
+//             ],
+//             "tags": {
+//                 "file-encoding": "utf-8"
+//             },
+//             "properties": {
+//                 "attributes": {
+//                     "enabled": true
+//                 }
+//             }
+//         },
+//         {
+//             "type": "Microsoft.Storage/storageAccounts/blobServices",
+//             "apiVersion": "2023-01-01",
+//             "name": "[concat(parameters('storageAccounts_name'), '/default')]",
+//             "dependsOn": [
+//                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_name'))]"
+//             ],
+//             "sku": {
+//                 "name": "Standard_LRS",
+//                 "tier": "Standard"
+//             },
+//             "properties": {
+//                 "cors": {
+//                     "corsRules": []
+//                 },
+//                 "deleteRetentionPolicy": {
+//                     "allowPermanentDelete": false,
+//                     "enabled": false
+//                 }
+//             }
+//         },
+//         {
+//             "type": "Microsoft.Storage/storageAccounts/fileServices",
+//             "apiVersion": "2023-01-01",
+//             "name": "[concat(parameters('storageAccounts_name'), '/default')]",
+//             "dependsOn": [
+//                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_name'))]"
+//             ],
+//             "sku": {
+//                 "name": "Standard_LRS",
+//                 "tier": "Standard"
+//             },
+//             "properties": {
+//                 "protocolSettings": {
+//                     "smb": {}
+//                 },
+//                 "cors": {
+//                     "corsRules": []
+//                 },
+//                 "shareDeleteRetentionPolicy": {
+//                     "enabled": true,
+//                     "days": 7
+//                 }
+//             }
+//         },
+//         {
+//             "type": "Microsoft.Storage/storageAccounts/queueServices",
+//             "apiVersion": "2023-01-01",
+//             "name": "[concat(parameters('storageAccounts_name'), '/default')]",
+//             "dependsOn": [
+//                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_name'))]"
+//             ],
+//             "properties": {
+//                 "cors": {
+//                     "corsRules": []
+//                 }
+//             }
+//         },
+//         {
+//             "type": "Microsoft.Storage/storageAccounts/tableServices",
+//             "apiVersion": "2023-01-01",
+//             "name": "[concat(parameters('storageAccounts_name'), '/default')]",
+//             "dependsOn": [
+//                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_name'))]"
+//             ],
+//             "properties": {
+//                 "cors": {
+//                     "corsRules": []
+//                 }
+//             }
+//         },
+//         {
+//             "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+//             "apiVersion": "2023-01-01",
+//             "name": "[concat(parameters('storageAccounts_name'), '/default/labs')]",
+//             "dependsOn": [
+//                 "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccounts_name'), 'default')]",
+//                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_name'))]"
+//             ],
+//             "properties": {
+//                 "immutableStorageWithVersioning": {
+//                     "enabled": false
+//                 },
+//                 "defaultEncryptionScope": "$account-encryption-key",
+//                 "denyEncryptionScopeOverride": false,
+//                 "publicAccess": "None"
+//             }
+//         },
+//         {
+//             "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+//             "apiVersion": "2023-01-01",
+//             "name": "[concat(parameters('storageAccounts_name'), '/default/tfstate')]",
+//             "dependsOn": [
+//                 "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccounts_name'), 'default')]",
+//                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_name'))]"
+//             ],
+//             "properties": {
+//                 "immutableStorageWithVersioning": {
+//                     "enabled": false
+//                 },
+//                 "defaultEncryptionScope": "$account-encryption-key",
+//                 "denyEncryptionScopeOverride": false,
+//                 "publicAccess": "None"
+//             }
+//         },
+//         {
+//             "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+//             "apiVersion": "2023-01-01",
+//             "name": "[concat(parameters('storageAccounts_name'), '/default/fileshare')]",
+//             "dependsOn": [
+//                 "[resourceId('Microsoft.Storage/storageAccounts/fileServices', parameters('storageAccounts_name'), 'default')]",
+//                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_name'))]"
+//             ],
+//             "properties": {
+//                 "accessTier": "TransactionOptimized",
+//                 "shareQuota": 5120,
+//                 "enabledProtocols": "SMB"
+//             }
+//         }
+//     ]
+// }
