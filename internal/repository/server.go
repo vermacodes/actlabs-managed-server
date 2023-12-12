@@ -15,6 +15,7 @@ import (
 )
 
 type serverRepository struct {
+	// https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#DefaultAzureCredential
 	cred *azidentity.DefaultAzureCredential
 }
 

@@ -3,6 +3,7 @@ package main
 import (
 	"actlabs-managed-server/internal/handler"
 	"actlabs-managed-server/internal/logger"
+	"actlabs-managed-server/internal/middleware"
 	"actlabs-managed-server/internal/repository"
 	"actlabs-managed-server/internal/service"
 
@@ -29,6 +30,7 @@ func main() {
 	config.AllowHeaders = []string{"Authorization", "Content-Type"}
 
 	router.Use(cors.New(config))
+	router.Use(middleware.Auth())
 
 	handler.NewServerHandler(router.Group("/"), serverService)
 
