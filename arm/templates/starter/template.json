@@ -43,6 +43,9 @@
             "apiVersion": "2023-07-01",
             "name": "[parameters('vaults_name')]",
             "location": "eastus",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroup_name'))]"
+            ],
             "properties": {
                 "sku": {
                     "family": "A",
