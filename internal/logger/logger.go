@@ -9,8 +9,13 @@ import (
 
 func SetupLogger() {
 	logLevel := os.Getenv("LOG_LEVEL")
+	if logLevel == "" {
+		slog.Error("LOG_LEVEL not set")
+	}
+
 	logLevelInt, err := strconv.Atoi(logLevel)
 	if err != nil {
+		slog.Error("Error converting LOG_LEVEL to int", err)
 		logLevelInt = 0
 	}
 

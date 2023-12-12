@@ -6,6 +6,7 @@ import (
 	"actlabs-managed-server/internal/middleware"
 	"actlabs-managed-server/internal/repository"
 	"actlabs-managed-server/internal/service"
+	"os"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -34,5 +35,9 @@ func main() {
 
 	handler.NewServerHandler(router.Group("/"), serverService)
 
-	router.Run(":8883")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8883"
+	}
+	router.Run(":" + port)
 }

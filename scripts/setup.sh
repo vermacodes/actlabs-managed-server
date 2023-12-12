@@ -288,6 +288,28 @@ function assign_actlabs_contributor_role() {
     return 0
 }
 
+# Function to assign actlabs as a reader on the subscription
+function assign_actlabs_reader_role() {
+    # Check if actlabs is a reader on the subscription
+    ACTLABS_ROLE=$(az role assignment list --assignee "${ACTLABS_APP_ID}" --scope "/subscriptions/${SUBSCRIPTION_ID}" --query "[?roleDefinitionName=='Reader'].roleDefinitionName" -o tsv)
+
+    if [[ -n "${ACTLABS_ROLE}" ]]; then
+        log "actlabs is already 'Reader' on the subscription"
+    else
+        log "assigning actlabs 'Reader' role on the subscription"
+        # Assign actlabs the 'Reader' role on the subscription
+        az role assignment create --assignee "${ACTLABS_APP_ID}" --role Reader --subscription "${SUBSCRIPTION_ID}"
+        if [ $? -ne 0 ]; then
+            err "failed to assign actlabs 'Reader' role on the subscription"
+            return 1
+        else
+            log "actlabs assigned 'Reader' role on the subscription"
+        fi
+    fi
+
+    return 0
+}
+
 # Function to print the instructions to the user
 function print_next_steps() {
     ok "Deployment complete!"
@@ -304,4 +326,5 @@ create_managed_identity
 assign_contributor_role
 assign_user_access_administrator_role
 assign_actlabs_contributor_role
+assign_actlabs_reader_role
 print_next_steps

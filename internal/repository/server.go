@@ -311,7 +311,8 @@ func (s *serverRepository) DestroyServer(server entity.Server) error {
 
 // verify that user is the owner of the subscription
 func (s *serverRepository) IsUserOwner(server entity.Server) (bool, error) {
-	slog.Info("Checking if user is owner of the subscription")
+	slog.Info("Checking if user " + server.UserAlias + " is owner of the subscription " + server.SubscriptionId)
+
 	if server.UserAlias == "" {
 		slog.Error("Error: userId is empty")
 		return false, errors.New("userId is required")
@@ -328,8 +329,10 @@ func (s *serverRepository) IsUserOwner(server entity.Server) (bool, error) {
 		return false, err
 	}
 
+	filter := "assignedTo('" + server.UserPrincipalId + "')"
+
 	pager := clientFactory.NewRoleAssignmentsClient().NewListForSubscriptionPager(&armauthorization.RoleAssignmentsClientListForSubscriptionOptions{
-		Filter:   to.Ptr(""),
+		Filter:   &filter,
 		TenantID: nil,
 	})
 	for pager.More() {
@@ -339,6 +342,7 @@ func (s *serverRepository) IsUserOwner(server entity.Server) (bool, error) {
 			return false, err
 		}
 		for _, roleAssignment := range page.Value {
+			slog.Debug("Role Assignment: " + *roleAssignment.Properties.PrincipalID + " " + *roleAssignment.Properties.Scope + " " + *roleAssignment.Properties.RoleDefinitionID)
 			if *roleAssignment.Properties.PrincipalID == server.UserPrincipalId &&
 				*roleAssignment.Properties.Scope == "/subscriptions/"+server.SubscriptionId &&
 				*roleAssignment.Properties.RoleDefinitionID == entity.OwnerRoleDefinitionId {
