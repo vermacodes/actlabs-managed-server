@@ -1,6 +1,37 @@
 #!/bin/bash
 
-required_env_vars=("AUTH_TOKEN_ISS" "AUTH_TOKEN_AUD" "AZURE_CLIENT_ID" "AZURE_CLIENT_SECRET" "AZURE_TENANT_ID" "LOG_LEVEL" "DOCKER_IMAGE")
+# gather input parameters
+# -t "tag" for image tag
+# -d for debug
+
+while getopts ":t:d" opt; do
+    case $opt in
+    t)
+        TAG=$OPTARG
+        ;;
+    d)
+        DEBUG=true
+        ;;
+    \?)
+        echo "Invalid option: -$OPTARG" >&2
+        ;;
+    esac
+done
+
+echo "TAG = ${TAG}"
+echo "DEBUG = ${DEBUG}"
+
+if [ -z "${TAG}" ]; then
+    TAG="latest"
+fi
+
+if [ ${DEBUG} ]; then
+    export LOG_LEVEL="-4"
+else
+    export LOG_LEVEL="0"
+fi
+
+required_env_vars=("AUTH_TOKEN_ISS" "AUTH_TOKEN_AUD" "AZURE_CLIENT_ID" "AZURE_CLIENT_SECRET" "AZURE_TENANT_ID")
 
 for var in "${required_env_vars[@]}"; do
   if [[ -z "${!var}" ]]; then
@@ -21,7 +52,7 @@ az containerapp create --name actlabs-managed-server \
   --subscription ACT-CSS-Readiness \
   --environment actlabs-managed-server-env \
   --allow-insecure false \
-  --image ${DOCKER_IMAGE} \
+  --image actlab.azurecr.io/actlabs-managed-server:${TAG} \
   --ingress 'external' \
   --min-replicas 1 \
   --max-replicas 1 \
