@@ -18,6 +18,9 @@ while getopts ":t:d" opt; do
     esac
 done
 
+source .env
+source ../.env
+
 echo "TAG = ${TAG}"
 echo "DEBUG = ${DEBUG}"
 

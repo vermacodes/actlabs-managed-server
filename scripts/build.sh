@@ -14,6 +14,9 @@ while getopts ":t:" opt; do
     esac
 done
 
+source .env
+source ../.env
+
 if [ -z "${TAG}" ]; then
     TAG="latest"
 fi

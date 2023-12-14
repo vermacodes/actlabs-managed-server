@@ -1,5 +1,8 @@
 #!/bin/bash
 
+source .env
+source ../.env
+
 export ROOT_DIR=$(pwd)
 export LOG_LEVEL="-4"
 
