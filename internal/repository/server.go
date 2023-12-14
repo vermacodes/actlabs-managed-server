@@ -171,10 +171,6 @@ func (s *serverRepository) DeployServer(server entity.Server) (entity.Server, er
 								Value: to.Ptr("/app"),
 							},
 							{
-								Name:  to.Ptr(""),
-								Value: to.Ptr(""),
-							},
-							{
 								Name:  to.Ptr("AZURE_CLIENT_ID"), // https://github.com/microsoft/azure-container-apps/issues/442
 								Value: &server.ManagedIdentityClientId,
 							},
