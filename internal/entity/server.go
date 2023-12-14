@@ -18,6 +18,7 @@ type Server struct {
 	ServerEnvId                string `json:"serverEnvId"`
 	LogLevel                   string `json:"logLevel"`
 	LastActivityTime           string `json:"lastActivityTime"`
+	DeleteServerEnv            bool   `json:"deleteServerEnv"`
 }
 
 type ServerService interface {

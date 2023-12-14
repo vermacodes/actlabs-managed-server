@@ -54,9 +54,11 @@ func (s *serverService) DestroyServer(server entity.Server) error {
 		return err
 	}
 
-	if err := s.serverRepository.DestroyServerEnv(server); err != nil {
-		slog.Error("Error:", err)
-		return err
+	if server.DeleteServerEnv {
+		if err := s.serverRepository.DestroyServerEnv(server); err != nil {
+			slog.Error("Error:", err)
+			return err
+		}
 	}
 
 	return nil
