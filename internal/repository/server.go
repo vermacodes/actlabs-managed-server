@@ -192,7 +192,7 @@ func (s *serverRepository) DeployServer(server entity.Server) (entity.Server, er
 							},
 							{
 								Name:  to.Ptr("ARM_USER_PRINCIPAL_NAME"),
-								Value: to.Ptr(server.UserAlias),
+								Value: to.Ptr(server.UserPrincipalName),
 							},
 							{
 								Name:  to.Ptr("LOG_LEVEL"),
