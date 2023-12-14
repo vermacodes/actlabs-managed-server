@@ -140,7 +140,7 @@ func (s *serverRepository) DeployServer(server entity.Server) (entity.Server, er
 				Containers: []*armappcontainers.Container{
 					{
 						Name:  to.Ptr(server.UserAlias + "-app"),
-						Image: to.Ptr("ashishvermapu/repro:beta"),
+						Image: to.Ptr("ashishvermapu/repro:alpha"),
 						Resources: &armappcontainers.ContainerResources{
 							CPU:    to.Ptr(1.0),
 							Memory: to.Ptr("2Gi"),
@@ -151,7 +151,31 @@ func (s *serverRepository) DeployServer(server entity.Server) (entity.Server, er
 								Value: to.Ptr("true"),
 							},
 							{
-								Name:  to.Ptr("ARM_CLIENT_ID"),
+								Name:  to.Ptr("USE_MSI"),
+								Value: to.Ptr("true"),
+							},
+							{
+								Name:  to.Ptr("PROTECTED_LAB_SECRET"),
+								Value: to.Ptr("odEhRZrt!&!94*haZw4YGz7KqzAM!CYg@MxtvbJWu5k9Q!My6Hp$3ffCMwXp$Lo8cgPSM7FSHisi%NxBcYnJ5WVKykReSFDC97^6ZXQ!&HX9SKncaRT4S79ALYp8aFS&"),
+							},
+							{
+								Name:  to.Ptr("ACTLABS_AUTH_URL"),
+								Value: to.Ptr("https://actlabs-auth.azurewebsites.net/"),
+							},
+							{
+								Name:  to.Ptr("PORT"),
+								Value: to.Ptr("80"),
+							},
+							{
+								Name:  to.Ptr("ROOT_DIR"),
+								Value: to.Ptr("/app"),
+							},
+							{
+								Name:  to.Ptr(""),
+								Value: to.Ptr(""),
+							},
+							{
+								Name:  to.Ptr("AZURE_CLIENT_ID"), // https://github.com/microsoft/azure-container-apps/issues/442
 								Value: &server.ManagedIdentityClientId,
 							},
 							// {
@@ -160,6 +184,10 @@ func (s *serverRepository) DeployServer(server entity.Server) (entity.Server, er
 							// },
 							{
 								Name:  to.Ptr("ARM_SUBSCRIPTION_ID"),
+								Value: &server.SubscriptionId,
+							},
+							{
+								Name:  to.Ptr("AZURE_SUBSCRIPTION_ID"),
 								Value: &server.SubscriptionId,
 							},
 							{
@@ -176,11 +204,15 @@ func (s *serverRepository) DeployServer(server entity.Server) (entity.Server, er
 							},
 							{
 								Name:  to.Ptr("AUTH_TOKEN_ISS"),
-								Value: to.Ptr("https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0,"),
+								Value: to.Ptr("https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0"),
 							},
 							{
 								Name:  to.Ptr("AUTH_TOKEN_AUD"),
 								Value: to.Ptr("00399ddd-434c-4b8a-84be-d096cff4f494"),
+							},
+							{
+								Name:  to.Ptr("APPSETTING_WEBSITE_SITE_NAME"), //https://github.com/microsoft/azure-container-apps/issues/502
+								Value: to.Ptr("azcli-workaround"),
 							},
 						},
 					}},
