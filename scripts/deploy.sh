@@ -19,7 +19,6 @@ while getopts ":t:d" opt; do
 done
 
 source .env
-source ../.env
 
 echo "TAG = ${TAG}"
 echo "DEBUG = ${DEBUG}"

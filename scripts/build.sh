@@ -15,7 +15,6 @@ while getopts ":t:" opt; do
 done
 
 source .env
-source ../.env
 
 if [ -z "${TAG}" ]; then
     TAG="latest"
