@@ -28,20 +28,15 @@ type ServerService interface {
 }
 
 type ServerRepository interface {
-	DeployServer(server Server) (Server, error)
-	DeployAzureContainerGroup(server Server) (Server, error)
-	EnsureServerUp(server Server) error
-	DeployServerEnv(server Server) (string, error)
-	CreateUserAssignedManagedIdentity(server Server) (Server, error)
-
-	DestroyServer(server Server) error
-	DestroyAzureContainerGroup(server Server) error
-	DestroyServerEnv(server Server) error
-
-	GetServer(server Server) (Server, error)
-	GetServerEnv(server Server) (string, error)
+	GetAzureContainerGroup(server Server) (Server, error)
 	GetUserAssignedManagedIdentity(server Server) (Server, error)
 
-	GetSecret(secretName string) (string, error)
+	DeployAzureContainerGroup(server Server) (Server, error)
+	CreateUserAssignedManagedIdentity(server Server) (Server, error)
+
+	EnsureServerUp(server Server) error
+
+	DestroyAzureContainerGroup(server Server) error
+
 	IsUserOwner(server Server) (bool, error)
 }

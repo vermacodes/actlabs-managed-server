@@ -63,9 +63,6 @@ func (s *serverService) DeployServer(server entity.Server) (entity.Server, error
 
 	server.Status = "failed"
 
-	//redact the secrets
-	//server.ClientSecret = "REDACTED"
-
 	return server, nil
 }
 
@@ -83,13 +80,6 @@ func (s *serverService) DestroyServer(server entity.Server) error {
 		return err
 	}
 
-	// if server.DeleteServerEnv {
-	// 	if err := s.serverRepository.DestroyServerEnv(server); err != nil {
-	// 		slog.Error("Error:", err)
-	// 		return err
-	// 	}
-	// }
-
 	return nil
 }
 
@@ -100,10 +90,9 @@ func (s *serverService) GetServer(server entity.Server) (entity.Server, error) {
 		return server, err
 	}
 
-	s.ServerDefaults(&server)          // Set defaults.
-	s.ContainerAppEnvironment(&server) // Create container app environment if it doesn't exist.
+	s.ServerDefaults(&server) // Set defaults.
 
-	return s.serverRepository.GetServer(server)
+	return s.serverRepository.GetAzureContainerGroup(server)
 }
 
 func (s *serverService) Validate(server entity.Server) error {
@@ -145,24 +134,6 @@ func (s *serverService) ServerDefaults(server *entity.Server) {
 	if server.ResourceGroup == "" {
 		server.ResourceGroup = "repro-project"
 	}
-}
-
-func (s *serverService) ContainerAppEnvironment(server *entity.Server) error {
-	envId, err := s.serverRepository.GetServerEnv(*server)
-	if err != nil {
-		slog.Info("Container apps environment not found, creating...")
-	}
-	if envId == "" {
-		envId, err = s.serverRepository.DeployServerEnv(*server)
-		if err != nil {
-			slog.Error("Error:", err)
-			return err
-		}
-	}
-
-	server.ServerEnvId = envId
-
-	return nil
 }
 
 func (s *serverService) UserAssignedIdentity(server *entity.Server) error {

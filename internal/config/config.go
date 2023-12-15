@@ -30,6 +30,7 @@ type Config struct {
 	HttpsPort                                int32
 	ReadinessProbePath                       string
 	TenantID                                 string
+	ServerManagerClientID                    string
 	// Add other configuration fields as needed
 }
 
@@ -237,6 +238,12 @@ func NewConfig() *Config {
 		actlabsReadinessProbeFailureThresholdInt = 20
 	}
 
+	serverManagerClientID := os.Getenv("SERVER_MANAGER_CLIENT_ID")
+	if serverManagerClientID == "" {
+		slog.Error("SERVER_MANAGER_CLIENT_ID not set")
+		os.Exit(1)
+	}
+
 	// Retrieve other environment variables and check them as needed
 
 	return &Config{
@@ -261,6 +268,7 @@ func NewConfig() *Config {
 		ActlabsReadinessProbePeriodSeconds:       int32(actlabsReadinessProbePeriodSecondsInt),
 		ActlabsReadinessProbeSuccessThreshold:    int32(actlabsReadinessProbeSuccessThresholdInt),
 		ActlabsReadinessProbeFailureThreshold:    int32(actlabsReadinessProbeFailureThresholdInt),
+		ServerManagerClientID:                    serverManagerClientID,
 
 		// Set other fields
 	}

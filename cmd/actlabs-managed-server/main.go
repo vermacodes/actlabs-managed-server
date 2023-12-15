@@ -1,6 +1,7 @@
 package main
 
 import (
+	"actlabs-managed-server/internal/auth"
 	"actlabs-managed-server/internal/config"
 	"actlabs-managed-server/internal/handler"
 	"actlabs-managed-server/internal/logger"
@@ -16,8 +17,9 @@ import (
 func main() {
 	logger.SetupLogger()
 	appConfig := config.NewConfig()
+	auth := auth.NewAuth(appConfig)
 
-	serverRepository, err := repository.NewServerRepository(appConfig)
+	serverRepository, err := repository.NewServerRepository(appConfig, auth)
 	if err != nil {
 		panic(err)
 	}

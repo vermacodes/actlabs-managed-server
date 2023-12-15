@@ -1,0 +1,97 @@
+apiVersion: "2021-10-01"
+name: actlabs-server-manager-aci
+location: eastus
+identity:
+  type: UserAssigned
+  userAssignedIdentities:
+    "/subscriptions/c2266a55-3f3e-4ff9-be04-66312926819d/resourceGroups/actlabs-app/providers/Microsoft.ManagedIdentity/userAssignedIdentities/actlabs-server-manager-msi": {}
+properties:
+  initContainers: 
+    - name: init
+      properties:
+        image: busybox
+        volumeMounts:
+          - name: emptydir
+            mountPath: /etc/caddy
+        command:
+          - /bin/sh
+          - -c
+          - echo -e "actlabs-server-manager.eastus.azurecontainer.io {\\n  reverse_proxy http://localhost:8883 \\n}" > /etc/caddy/Caddyfile
+  containers:
+    - name: caddy
+      properties:
+        image: ashishvermapu/caddy:latest
+        ports:
+          - protocol: TCP
+            port: 80
+          - protocol: TCP
+            port: 443
+        resources:
+          requests:
+            memoryInGB: 0.5
+            cpu: 0.5
+          limits:
+            memoryInGB: 0.5
+            cpu: 0.5
+        volumeMounts:
+          - name: emptydir
+            mountPath: /etc/caddy
+    - name: server-manager
+      properties:
+        image: ashishvermapu/actlabs-managed-server:latest
+        ports:
+        - port: 8883
+          protocol: TCP
+        environmentVariables:
+        - name: ACTLABS_AUTH_URL
+          value: https://actlabs-auth.azurewebsites.net/
+        - name: ACTLABS_PORT
+          value: 8881
+        - name: ACTLABS_READINESS_PROBE_PATH
+          value: /status
+        - name: ACTLABS_ROOT_DIR
+          value: /app
+        - name: ACTLABS_SERVER_UP_WAIT_TIME_SECONDS
+          value: 180
+        - name: AUTH_TOKEN_AUD
+          value: 00399ddd-434c-4b8a-84be-d096cff4f494
+        - name: AUTH_TOKEN_ISS
+          value: https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/v2.0
+        - name: HTTPS_PORT
+          value: 443
+        - name: HTTP_PORT
+          value: 80
+        - name: PORT
+          value: 8883
+        - name: PROTECTED_LAB_SECRET
+          secureValue: odEhRZrt!&!94*haZw4YGz7KqzAM!CYg@MxtvbJWu5k9Q!My6Hp$3ffCMwXp$Lo8cgPSM7FSHisi%NxBcYnJ5WVKykReSFDC97^6ZXQ!&HX9SKncaRT4S79ALYp8aFS&
+        - name: SERVER_MANAGER_CLIENT_ID
+          value: 9ae3061c-c01c-4d5d-88d6-ca2cb5c66c6e
+        - name: TENANT_ID
+          value: 72f988bf-86f1-41af-91ab-2d7cd011db47
+        - name: USE_MSI
+          value: true
+        resources:
+          requests:
+            memoryInGB: 1.0
+            cpu: 1.0
+          limits:
+            memoryInGB: 1.0
+            cpu: 1.0
+        volumeMounts:
+          - name: emptydir
+            mountPath: /etc/caddy
+  ipAddress:
+    ports:
+      - protocol: TCP
+        port: 80
+      - protocol: TCP
+        port: 443
+    type: Public        
+    dnsNameLabel: actlabs-server-manager
+  osType: Linux
+  volumes:
+    - name: emptydir
+      emptyDir: {}
+tags: null
+type: Microsoft.ContainerInstance/containerGroups

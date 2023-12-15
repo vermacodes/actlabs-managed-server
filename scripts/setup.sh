@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ACTLABS_APP_ID="00399ddd-434c-4b8a-84be-d096cff4f494"
+ACTLABS_APP_ID="9ae3061c-c01c-4d5d-88d6-ca2cb5c66c6e"
 RESOURCE_GROUP="repro-project"
 
 RED='\033[0;31m'

@@ -5,7 +5,6 @@ WORKDIR /app
 
 ADD actlabs-managed-server ./
 
-EXPOSE 80/tcp
-EXPOSE 443/tcp
+EXPOSE 8883/tcp
 
-ENTRYPOINT [ "/bin/bash", "-c", "export PORT='80' && ./actlabs-managed-server" ]
+ENTRYPOINT [ "/bin/bash", "-c", "./actlabs-managed-server" ]
