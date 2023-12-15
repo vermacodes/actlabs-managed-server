@@ -1,19 +1,30 @@
 package service
 
 import (
+	"actlabs-managed-server/internal/config"
 	"actlabs-managed-server/internal/entity"
+	"actlabs-managed-server/internal/helper"
 	"errors"
+	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/exp/slog"
 )
 
 type serverService struct {
 	serverRepository entity.ServerRepository
+	appConfig        *config.Config
 }
 
-func NewServerService(serverRepository entity.ServerRepository) entity.ServerService {
-	return &serverService{serverRepository: serverRepository}
+func NewServerService(
+	serverRepository entity.ServerRepository,
+	appConfig *config.Config,
+) entity.ServerService {
+	return &serverService{
+		serverRepository: serverRepository,
+		appConfig:        appConfig,
+	}
 }
 
 func (s *serverService) DeployServer(server entity.Server) (entity.Server, error) {
@@ -24,15 +35,33 @@ func (s *serverService) DeployServer(server entity.Server) (entity.Server, error
 		return server, err
 	}
 
-	s.ServerDefaults(&server)          // Set defaults.
-	s.ContainerAppEnvironment(&server) // Create container app environment if it doesn't exist.
-	s.UserAssignedIdentity(&server)    // Managed Identity
+	s.ServerDefaults(&server) // Set defaults.
+	// s.ContainerAppEnvironment(&server) // Create container app environment if it doesn't exist.
+	s.UserAssignedIdentity(&server) // Managed Identity
 
-	server, err := s.serverRepository.DeployServer(server)
+	server, err := s.serverRepository.DeployAzureContainerGroup(server)
 	if err != nil {
 		slog.Error("Error:", err)
 		return server, err
 	}
+
+	// convert to int
+	waitTimeSeconds, err := strconv.Atoi(s.appConfig.ActlabsServerUPWaitTimeSeconds)
+	if err != nil {
+		slog.Error("Error:", err)
+		return server, err
+	}
+
+	// Ensure server is up and running. check every 5 seconds for 3 minutes.
+	for i := 0; i < waitTimeSeconds/5; i++ {
+		if err := s.serverRepository.EnsureServerUp(server); err == nil {
+			slog.Info("Server is up and running")
+			return server, err
+		}
+		time.Sleep(5 * time.Second)
+	}
+
+	server.Status = "failed"
 
 	//redact the secrets
 	//server.ClientSecret = "REDACTED"
@@ -49,17 +78,17 @@ func (s *serverService) DestroyServer(server entity.Server) error {
 
 	s.ServerDefaults(&server)
 
-	if err := s.serverRepository.DestroyServer(server); err != nil {
+	if err := s.serverRepository.DestroyAzureContainerGroup(server); err != nil {
 		slog.Error("Error:", err)
 		return err
 	}
 
-	if server.DeleteServerEnv {
-		if err := s.serverRepository.DestroyServerEnv(server); err != nil {
-			slog.Error("Error:", err)
-			return err
-		}
-	}
+	// if server.DeleteServerEnv {
+	// 	if err := s.serverRepository.DestroyServerEnv(server); err != nil {
+	// 		slog.Error("Error:", err)
+	// 		return err
+	// 	}
+	// }
 
 	return nil
 }
@@ -102,7 +131,7 @@ func (s *serverService) Validate(server entity.Server) error {
 
 func (s *serverService) ServerDefaults(server *entity.Server) {
 	if server.UserAlias == "" {
-		server.UserAlias = strings.Split(server.UserPrincipalName, "@")[0]
+		server.UserAlias = helper.UserAlias(server.UserPrincipalName)
 	}
 
 	if server.LogLevel == "" {

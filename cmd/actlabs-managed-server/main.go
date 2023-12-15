@@ -1,6 +1,7 @@
 package main
 
 import (
+	"actlabs-managed-server/internal/config"
 	"actlabs-managed-server/internal/handler"
 	"actlabs-managed-server/internal/logger"
 	"actlabs-managed-server/internal/middleware"
@@ -14,13 +15,14 @@ import (
 
 func main() {
 	logger.SetupLogger()
+	appConfig := config.NewConfig()
 
-	serverRepository, err := repository.NewServerRepository()
+	serverRepository, err := repository.NewServerRepository(appConfig)
 	if err != nil {
 		panic(err)
 	}
 
-	serverService := service.NewServerService(serverRepository)
+	serverService := service.NewServerService(serverRepository, appConfig)
 
 	router := gin.Default()
 	router.SetTrustedProxies(nil)

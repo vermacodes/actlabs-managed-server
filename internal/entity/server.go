@@ -29,10 +29,13 @@ type ServerService interface {
 
 type ServerRepository interface {
 	DeployServer(server Server) (Server, error)
+	DeployAzureContainerGroup(server Server) (Server, error)
+	EnsureServerUp(server Server) error
 	DeployServerEnv(server Server) (string, error)
 	CreateUserAssignedManagedIdentity(server Server) (Server, error)
 
 	DestroyServer(server Server) error
+	DestroyAzureContainerGroup(server Server) error
 	DestroyServerEnv(server Server) error
 
 	GetServer(server Server) (Server, error)

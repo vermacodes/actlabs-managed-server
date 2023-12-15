@@ -194,3 +194,7 @@ func GetTodaysDateTimeString() string {
 func GetTodaysDateTimeISOString() string {
 	return time.Now().Format(time.RFC3339)
 }
+
+func UserAlias(userPrincipalName string) string {
+	return strings.Split(userPrincipalName, "@")[0]
+}
