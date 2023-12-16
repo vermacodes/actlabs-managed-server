@@ -5,6 +5,7 @@ import (
 	"actlabs-managed-server/internal/entity"
 	"actlabs-managed-server/internal/helper"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -56,6 +57,15 @@ func (s *serverService) DeployServer(server entity.Server) (entity.Server, error
 	for i := 0; i < waitTimeSeconds/5; i++ {
 		if err := s.serverRepository.EnsureServerUp(server); err == nil {
 			slog.Info("Server is up and running")
+
+			server.Status = "running"
+			server.LastUserActivityTime = time.Now().Format(time.RFC3339)
+
+			// Update server in database.
+			if err := s.serverRepository.UpsertServerInDatabase(server); err != nil {
+				slog.Error("not able to update server in database", err)
+			}
+
 			return server, err
 		}
 		time.Sleep(5 * time.Second)
@@ -93,6 +103,23 @@ func (s *serverService) GetServer(server entity.Server) (entity.Server, error) {
 	s.ServerDefaults(&server) // Set defaults.
 
 	return s.serverRepository.GetAzureContainerGroup(server)
+}
+
+func (s *serverService) UpdateActivityStatus(userPrincipalName string) error {
+	server, err := s.serverRepository.GetServerFromDatabase("actlabs", userPrincipalName)
+	if err != nil {
+		slog.Error("Error getting server from database:", err)
+		return fmt.Errorf("error getting server from database: %w", err)
+	}
+
+	server.LastUserActivityTime = time.Now().Format(time.RFC3339)
+
+	if err := s.serverRepository.UpsertServerInDatabase(server); err != nil {
+		slog.Error("Error updating server in database:", err)
+		return fmt.Errorf("error updating server in database: %w", err)
+	}
+
+	return nil
 }
 
 func (s *serverService) Validate(server entity.Server) error {

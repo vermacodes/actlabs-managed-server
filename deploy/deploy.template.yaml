@@ -53,14 +53,6 @@ properties:
           value: /app
         - name: ACTLABS_SERVER_UP_WAIT_TIME_SECONDS
           value: 180
-        - name: ACTLABS_SUBSCRIPTION_ID
-          value: c2266a55-3f3e-4ff9-be04-66312926819d
-        - name: ACTLABS_RESOURCE_GROUP
-          value: actlabs-app
-        - name: ACTLABS_STORAGE_ACCOUNT
-          value: actlabs
-        - name: ACTLABS_SERVER_TABLE_NAME
-          value: ActlabsServers
         - name: AUTH_TOKEN_AUD
           value: 00399ddd-434c-4b8a-84be-d096cff4f494
         - name: AUTH_TOKEN_ISS

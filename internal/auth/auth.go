@@ -3,6 +3,7 @@ package auth
 import (
 	"actlabs-managed-server/internal/config"
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -10,6 +11,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/data/aztables"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"golang.org/x/exp/slog"
 )
@@ -89,4 +91,28 @@ func (a *Auth) GetStorageAccountKey(subscriptionId string, resourceGroup string,
 	}
 
 	return *resp.Keys[0].Value, nil
+}
+
+func (a *Auth) GetTableClient(subscriptionId string, resourceGroup string, storageAccountName string, tableName string) (*aztables.Client, error) {
+	accountKey, err := a.GetStorageAccountKey(subscriptionId, resourceGroup, storageAccountName)
+	if err != nil {
+		slog.Error("error getting storage account key:", err)
+		return &aztables.Client{}, fmt.Errorf("error getting storage account key %w", err)
+	}
+
+	cred, err := aztables.NewSharedKeyCredential(storageAccountName, accountKey)
+	if err != nil {
+		slog.Error("error creating shared key credential:", err)
+		return &aztables.Client{}, fmt.Errorf("error creating shared key credential %w", err)
+	}
+
+	tableUrl := "https://" + storageAccountName + ".table.core.windows.net/" + tableName
+
+	tableClient, err := aztables.NewClientWithSharedKey(tableUrl, cred, nil)
+	if err != nil {
+		slog.Error("error creating table client:", err)
+		return &aztables.Client{}, fmt.Errorf("error creating table client %w", err)
+	}
+
+	return tableClient, nil
 }

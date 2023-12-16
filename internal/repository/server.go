@@ -5,7 +5,9 @@ import (
 	"actlabs-managed-server/internal/config"
 	"actlabs-managed-server/internal/entity"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -401,4 +403,63 @@ func (s *serverRepository) IsUserOwner(server entity.Server) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func (s *serverRepository) UpsertServerInDatabase(server entity.Server) error {
+	tableClient, err := s.auth.GetTableClient(
+		s.appConfig.ActlabsSubscriptionID,
+		s.appConfig.ActlabsResourceGroup,
+		s.appConfig.ActlabsStorageAccount,
+		s.appConfig.ActlabsServerTableName,
+	)
+	if err != nil {
+		slog.Error("error creating table client:", err)
+		return fmt.Errorf("error creating table client %w", err)
+	}
+
+	server.PartitionKey = "actlabs"
+	server.RowKey = server.UserPrincipalName
+
+	val, err := json.Marshal(server)
+	if err != nil {
+		slog.Error("error marshalling server:", err)
+		return fmt.Errorf("error marshalling server %w", err)
+	}
+
+	_, err = tableClient.UpsertEntity(context.Background(), val, nil)
+	if err != nil {
+		slog.Error("error upserting server:", err)
+		return fmt.Errorf("error upserting server %w", err)
+	}
+
+	slog.Debug("Server upserted in database")
+
+	return nil
+}
+func (s *serverRepository) GetServerFromDatabase(partitionKey string, rowKey string) (entity.Server, error) {
+	tableClient, err := s.auth.GetTableClient(s.appConfig.ActlabsSubscriptionID,
+		s.appConfig.ActlabsResourceGroup,
+		s.appConfig.ActlabsStorageAccount,
+		s.appConfig.ActlabsServerTableName,
+	)
+	if err != nil {
+		slog.Error("error creating table client:", err)
+		return entity.Server{}, fmt.Errorf("error creating table client %w", err)
+	}
+
+	response, err := tableClient.GetEntity(context.Background(), partitionKey, rowKey, nil)
+	if err != nil {
+		slog.Error("error getting server from database:", err)
+		return entity.Server{}, fmt.Errorf("error getting server from database %w", err)
+	}
+
+	server := entity.Server{}
+	err = json.Unmarshal(response.Value, &server)
+	if err != nil {
+		slog.Error("error unmarshalling server:", err)
+		return entity.Server{}, fmt.Errorf("error unmarshalling server %w", err)
+	}
+
+	return server, nil
+
 }

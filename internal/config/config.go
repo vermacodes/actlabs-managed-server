@@ -31,6 +31,10 @@ type Config struct {
 	ReadinessProbePath                       string
 	TenantID                                 string
 	ServerManagerClientID                    string
+	ActlabsSubscriptionID                    string
+	ActlabsResourceGroup                     string
+	ActlabsStorageAccount                    string
+	ActlabsServerTableName                   string
 	// Add other configuration fields as needed
 }
 
@@ -244,6 +248,30 @@ func NewConfig() *Config {
 		os.Exit(1)
 	}
 
+	actlabsSubscriptionID := os.Getenv("ACTLABS_SUBSCRIPTION_ID")
+	if actlabsSubscriptionID == "" {
+		slog.Error("ACTLABS_SUBSCRIPTION_ID not set")
+		os.Exit(1)
+	}
+
+	actlabsResourceGroup := os.Getenv("ACTLABS_RESOURCE_GROUP")
+	if actlabsResourceGroup == "" {
+		slog.Error("ACTLABS_RESOURCE_GROUP not set")
+		os.Exit(1)
+	}
+
+	actlabsStorageAccount := os.Getenv("ACTLABS_STORAGE_ACCOUNT")
+	if actlabsStorageAccount == "" {
+		slog.Error("ACTLABS_STORAGE_ACCOUNT not set")
+		os.Exit(1)
+	}
+
+	actlabsServerTableName := os.Getenv("ACTLABS_SERVER_TABLE_NAME")
+	if actlabsServerTableName == "" {
+		slog.Error("ACTLABS_SERVER_TABLE_NAME not set")
+		os.Exit(1)
+	}
+
 	// Retrieve other environment variables and check them as needed
 
 	return &Config{
@@ -269,7 +297,10 @@ func NewConfig() *Config {
 		ActlabsReadinessProbeSuccessThreshold:    int32(actlabsReadinessProbeSuccessThresholdInt),
 		ActlabsReadinessProbeFailureThreshold:    int32(actlabsReadinessProbeFailureThresholdInt),
 		ServerManagerClientID:                    serverManagerClientID,
-
+		ActlabsSubscriptionID:                    actlabsSubscriptionID,
+		ActlabsResourceGroup:                     actlabsResourceGroup,
+		ActlabsStorageAccount:                    actlabsStorageAccount,
+		ActlabsServerTableName:                   actlabsServerTableName,
 		// Set other fields
 	}
 }
