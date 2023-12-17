@@ -15,7 +15,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/lestrrat-go/jwx/jwa"
 	"github.com/lestrrat-go/jwx/jwk"
-	"golang.org/x/exp/slog"
 )
 
 var alphabet = []byte("abcdefghijklmnopqrstuvwxyz0123456789")
@@ -121,7 +120,6 @@ func ParseToken(tokenString string) (*jwt.Token, error) {
 
 	if !token.Valid {
 		err := errors.New("token is not valid")
-		slog.Error("token is not valid", err)
 		return nil, err
 	}
 

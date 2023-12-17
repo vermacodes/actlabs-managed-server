@@ -4,23 +4,19 @@ import (
 	"actlabs-managed-server/internal/config"
 	"context"
 	"fmt"
-	"log"
-	"os"
-	"os/exec"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/data/aztables"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
-	"golang.org/x/exp/slog"
 )
 
 type Auth struct {
-	Cred azcore.TokenCredential
+	Cred                      azcore.TokenCredential
+	ActlabsServersTableClient *aztables.Client
 }
 
-func NewAuth(appConfig *config.Config) *Auth {
+func NewAuth(appConfig *config.Config) (*Auth, error) {
 	var cred azcore.TokenCredential
 	var err error
 
@@ -29,90 +25,62 @@ func NewAuth(appConfig *config.Config) *Auth {
 			ID: azidentity.ClientID(appConfig.ServerManagerClientID),
 		})
 		if err != nil {
-			log.Fatalf("Failed to initialize managed identity auth: %v", err)
+			return nil, fmt.Errorf("failed to initialize managed identity auth: %v", err)
 		}
 	} else {
 		cred, err = azidentity.NewDefaultAzureCredential(nil)
 		if err != nil {
-			log.Fatalf("Failed to initialize default auth: %v", err)
+			return nil, fmt.Errorf("failed to initialize default auth: %v", err)
 		}
 	}
 
-	return &Auth{Cred: cred}
-}
-
-// login using msi
-func AzureCLILoginByMSI(username string) {
-	out, err := exec.Command("bash", "-c", "az login --identity --username "+username).Output()
+	tableClient, err := GetTableClient(
+		appConfig.ActlabsSubscriptionID,
+		cred,
+		appConfig.ActlabsResourceGroup,
+		appConfig.ActlabsStorageAccount,
+		appConfig.ActlabsServerTableName,
+	)
 	if err != nil {
-		slog.Error("not able to login using msi", err)
-		os.Exit(1)
+		return nil, fmt.Errorf("not able to create table client %w", err)
 	}
 
-	slog.Info("az login --identity output: " + string(out))
+	return &Auth{
+		Cred:                      cred,
+		ActlabsServersTableClient: tableClient,
+	}, nil
 }
 
-func (a *Auth) GetARMAccessToken() (string, error) {
-	accessToken, err := a.Cred.GetToken(context.Background(), policy.TokenRequestOptions{
-		Scopes: []string{"https://management.azure.com/.default"},
-	})
+func GetStorageAccountKey(subscriptionId string, cred azcore.TokenCredential, resourceGroup string, storageAccountName string) (string, error) {
+	client, err := armstorage.NewAccountsClient(subscriptionId, cred, nil)
 	if err != nil {
-		return "", err
-	}
-	return accessToken.Token, nil
-}
-
-func (a *Auth) GetStorageAccessToken() (string, error) {
-	accessToken, err := a.Cred.GetToken(context.Background(), policy.TokenRequestOptions{
-		Scopes: []string{"https://storage.azure.com/.default"},
-	})
-	if err != nil {
-		return "", err
-	}
-	return accessToken.Token, nil
-}
-
-func (a *Auth) GetStorageAccountKey(subscriptionId string, resourceGroup string, storageAccountName string) (string, error) {
-	client, err := armstorage.NewAccountsClient(subscriptionId, a.Cred, nil)
-	if err != nil {
-		slog.Error("not able to create client factory to get storage account key", err)
 		return "", err
 	}
 
 	resp, err := client.ListKeys(context.Background(), resourceGroup, storageAccountName, nil)
 	if err != nil {
-		slog.Error("not able to get storage account key", err)
 		return "", err
 	}
 
 	if len(resp.Keys) == 0 {
-		slog.Error("no storage account key found")
-		return "", nil
+		return "", fmt.Errorf("no storage account key found")
 	}
 
 	return *resp.Keys[0].Value, nil
 }
 
-func (a *Auth) GetTableClient(subscriptionId string, resourceGroup string, storageAccountName string, tableName string) (*aztables.Client, error) {
-	accountKey, err := a.GetStorageAccountKey(subscriptionId, resourceGroup, storageAccountName)
+func GetTableClient(subscriptionId string, cred azcore.TokenCredential, resourceGroup string, storageAccountName string, tableName string) (*aztables.Client, error) {
+	accountKey, err := GetStorageAccountKey(subscriptionId, cred, resourceGroup, storageAccountName)
 	if err != nil {
-		slog.Error("error getting storage account key:", err)
 		return &aztables.Client{}, fmt.Errorf("error getting storage account key %w", err)
 	}
 
-	cred, err := aztables.NewSharedKeyCredential(storageAccountName, accountKey)
+	sharedKeyCred, err := aztables.NewSharedKeyCredential(storageAccountName, accountKey)
 	if err != nil {
-		slog.Error("error creating shared key credential:", err)
 		return &aztables.Client{}, fmt.Errorf("error creating shared key credential %w", err)
 	}
 
 	tableUrl := "https://" + storageAccountName + ".table.core.windows.net/" + tableName
 
-	tableClient, err := aztables.NewClientWithSharedKey(tableUrl, cred, nil)
-	if err != nil {
-		slog.Error("error creating table client:", err)
-		return &aztables.Client{}, fmt.Errorf("error creating table client %w", err)
-	}
-
-	return tableClient, nil
+	return aztables.NewClientWithSharedKey(tableUrl, sharedKeyCred, nil)
 }

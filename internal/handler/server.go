@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"golang.org/x/exp/slog"
 )
 
 type serverHandler struct {
@@ -43,7 +42,6 @@ func (h *serverHandler) GetServer(c *gin.Context) {
 func (h *serverHandler) DeployServer(c *gin.Context) {
 	server := entity.Server{}
 	if err := c.ShouldBindJSON(&server); err != nil {
-		slog.Error("not able to bind json", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}

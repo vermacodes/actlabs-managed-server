@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 
@@ -38,7 +39,7 @@ type Config struct {
 	// Add other configuration fields as needed
 }
 
-func NewConfig() *Config {
+func NewConfig() (*Config, error) {
 
 	// Load environment variables from .env file
 	err := godotenv.Load()
@@ -46,230 +47,134 @@ func NewConfig() *Config {
 		slog.Error("Error loading .env file")
 	}
 
-	authTokenAud := os.Getenv("AUTH_TOKEN_AUD")
+	authTokenAud := getEnv("AUTH_TOKEN_AUD")
 	if authTokenAud == "" {
-		slog.Error("AUTH_TOKEN_AUD not set")
-		os.Exit(1)
+		return nil, fmt.Errorf("AUTH_TOKEN_AUD not set")
 	}
-	slog.Info("AUTH_TOKEN_AUD: " + authTokenAud)
 
-	authTokenIss := os.Getenv("AUTH_TOKEN_ISS")
+	authTokenIss := getEnv("AUTH_TOKEN_ISS")
 	if authTokenIss == "" {
-		slog.Error("AUTH_TOKEN_ISS not set")
-		os.Exit(1)
+		return nil, fmt.Errorf("AUTH_TOKEN_ISS not set")
 	}
-	slog.Info("AUTH_TOKEN_ISS: " + authTokenIss)
 
-	actlabsRootDir := os.Getenv("ACTLABS_ROOT_DIR")
+	actlabsRootDir := getEnv("ACTLABS_ROOT_DIR")
 	if actlabsRootDir == "" {
-		slog.Error("ROOT_DIR not set")
-		os.Exit(1)
+		return nil, fmt.Errorf("ROOT_DIR not set")
 	}
-	slog.Info("ROOT_DIR: " + actlabsRootDir)
 
-	protectedLabSecret := os.Getenv("PROTECTED_LAB_SECRET")
+	protectedLabSecret := getEnv("PROTECTED_LAB_SECRET")
 	if protectedLabSecret == "" {
-		slog.Error("PROTECTED_LAB_SECRET not set")
-		os.Exit(1)
+		return nil, fmt.Errorf("PROTECTED_LAB_SECRET not set")
 	}
 
-	useMsiString := os.Getenv("USE_MSI")
-	if useMsiString == "" {
-		slog.Error("USE_MSI not set")
-		os.Exit(1)
-	}
-	useMsi := false
-	if useMsiString == "true" {
-		slog.Info("USE_MSI: true")
-		useMsi = true
-	} else {
-		slog.Info("USE_MSI: false")
+	useMsi, err := strconv.ParseBool(getEnvWithDefault("USE_MSI", "false"))
+	if err != nil {
+		return nil, err
 	}
 
-	actlabsServerUPWaitTimeSeconds := os.Getenv("ACTLABS_SERVER_UP_WAIT_TIME_SECONDS")
+	actlabsServerUPWaitTimeSeconds := getEnvWithDefault("ACTLABS_SERVER_UP_WAIT_TIME_SECONDS", "180")
 	if actlabsServerUPWaitTimeSeconds == "" {
-		slog.Error("ACTLABS_SERVER_UP_WAIT_TIME_SECONDS not set defaulting to 180 seconds")
-		actlabsServerUPWaitTimeSeconds = "180"
+		return nil, fmt.Errorf("ACTLABS_SERVER_UP_WAIT_TIME_SECONDS not set")
 	}
 
-	actlabsPortString := os.Getenv("ACTLABS_PORT")
-	if actlabsPortString == "" {
-		slog.Error("ACTLABS_PORT not set defaulting to 8881")
-		actlabsPortString = "8881"
-	}
-	actlabsPort, err := strconv.ParseInt(actlabsPortString, 10, 32)
+	actlabsPort, err := strconv.ParseInt(getEnvWithDefault("ACTLABS_PORT", "8881"), 10, 32)
 	if err != nil {
-		slog.Error("ACTLABS_PORT not set defaulting to 8881")
-		actlabsPort = 8881
+		return nil, fmt.Errorf("ACTLABS_PORT not set")
 	}
 
-	actlabsAuthURL := os.Getenv("ACTLABS_AUTH_URL")
+	actlabsAuthURL := getEnv("ACTLABS_AUTH_URL")
 	if actlabsAuthURL == "" {
-		slog.Error("ACTLABS_AUTH_URL not set defaulting to http://localhost:8880")
-		os.Exit(1)
+		return nil, fmt.Errorf("ACTLABS_AUTH_URL not set")
 	}
 
-	httpPortString := os.Getenv("HTTP_PORT")
-	if httpPortString == "" {
-		slog.Error("HTTP_PORT not set defaulting to 80")
-		httpPortString = "80"
-	}
-	httpPort, err := strconv.Atoi(httpPortString)
+	httpPort, err := strconv.Atoi(getEnvWithDefault("HTTP_PORT", "80"))
 	if err != nil {
-		slog.Error("HTTP_PORT not set defaulting to 80")
-		httpPort = 80
+		return nil, fmt.Errorf("HTTP_PORT not set")
 	}
 
-	httpsPortString := os.Getenv("HTTPS_PORT")
-	if httpsPortString == "" {
-		slog.Error("HTTPS_PORT not set defaulting to 443")
-		httpsPortString = "443"
-	}
-	httpsPort, err := strconv.Atoi(httpsPortString)
+	httpsPort, err := strconv.Atoi(getEnvWithDefault("HTTPS_PORT", "443"))
 	if err != nil {
-		slog.Error("HTTPS_PORT not set defaulting to 443")
-		httpsPort = 443
+		return nil, fmt.Errorf("HTTPS_PORT not set")
 	}
 
-	readinessProbePath := os.Getenv("READINESS_PROBE_PATH")
+	readinessProbePath := getEnvWithDefault("READINESS_PROBE_PATH", "/status")
 	if readinessProbePath == "" {
-		slog.Error("READINESS_PROBE_PATH not set defaulting to /status")
-		readinessProbePath = "/status"
+		return nil, fmt.Errorf("READINESS_PROBE_PATH not set")
 	}
 
-	tenantID := os.Getenv("TENANT_ID")
+	tenantID := getEnv("TENANT_ID")
 	if tenantID == "" {
-		slog.Error("TENANT_ID not set")
-		os.Exit(1)
+		return nil, fmt.Errorf("TENANT_ID not set")
 	}
 
-	actlabsCPU := os.Getenv("ACTLABS_CPU")
-	if actlabsCPU == "" {
-		slog.Error("ACTLABS_CPU not set defaulting to 0.5")
-		actlabsCPU = "0.5"
-	}
-	actlabsCPUFloat, err := strconv.ParseFloat(actlabsCPU, 32)
+	actlabsCPUFloat, err := strconv.ParseFloat(getEnvWithDefault("ACTLABS_CPU", "0.5"), 32)
 	if err != nil {
-		slog.Error("ACTLABS_CPU not set defaulting to 0.5")
-		actlabsCPUFloat = 0.5
+		return nil, err
 	}
 
-	actlabsMemory := os.Getenv("ACTLABS_MEMORY")
-	if actlabsMemory == "" {
-		slog.Error("ACTLABS_MEMORY not set defaulting to 0.5")
-		actlabsMemory = "0.5"
-	}
-	actlabsMemoryFloat, err := strconv.ParseFloat(actlabsMemory, 32)
+	actlabsMemoryFloat, err := strconv.ParseFloat(getEnvWithDefault("ACTLABS_MEMORY", "0.5"), 32)
 	if err != nil {
-		slog.Error("ACTLABS_MEMORY not set defaulting to 0.5")
-		actlabsMemoryFloat = 0.5
+		return nil, err
 	}
 
-	caddyCPU := os.Getenv("CADDY_CPU")
-	if caddyCPU == "" {
-		slog.Error("CADDY_CPU not set defaulting to 0.5")
-		caddyCPU = "0.5"
-	}
-	caddyCPUFloat, err := strconv.ParseFloat(caddyCPU, 32)
+	caddyCPUFloat, err := strconv.ParseFloat(getEnvWithDefault("CADDY_CPU", "0.5"), 32)
 	if err != nil {
-		slog.Error("CADDY_CPU not set defaulting to 0.5")
-		caddyCPUFloat = 0.5
+		return nil, err
 	}
 
-	caddyMemory := os.Getenv("CADDY_MEMORY")
-	if caddyMemory == "" {
-		slog.Error("CADDY_MEMORY not set defaulting to 0.5")
-		caddyMemory = "0.5"
-	}
-	caddyMemoryFloat, err := strconv.ParseFloat(caddyMemory, 32)
+	caddyMemoryFloat, err := strconv.ParseFloat(getEnvWithDefault("CADDY_MEMORY", "0.5"), 32)
 	if err != nil {
-		slog.Error("CADDY_MEMORY not set defaulting to 0.5")
-		caddyMemoryFloat = 0.5
+		return nil, err
 	}
 
-	actlabsReadinessProbeInitialDelaySeconds := os.Getenv("ACTLABS_READINESS_PROBE_INITIAL_DELAY_SECONDS")
-	if actlabsReadinessProbeInitialDelaySeconds == "" {
-		slog.Error("ACTLABS_READINESS_PROBE_INITIAL_DELAY_SECONDS not set defaulting to 5")
-		actlabsReadinessProbeInitialDelaySeconds = "10"
-	}
-	actlabsReadinessProbeInitialDelaySecondsInt, err := strconv.ParseInt(actlabsReadinessProbeInitialDelaySeconds, 10, 32)
+	actlabsReadinessProbeInitialDelaySecondsInt, err := strconv.ParseInt(getEnvWithDefault("ACTLABS_READINESS_PROBE_INITIAL_DELAY_SECONDS", "10"), 10, 32)
 	if err != nil {
-		slog.Error("ACTLABS_READINESS_PROBE_INITIAL_DELAY_SECONDS not set defaulting to 5")
-		actlabsReadinessProbeInitialDelaySecondsInt = 10
+		return nil, err
 	}
 
-	actlabsReadinessProbeTimeoutSeconds := os.Getenv("ACTLABS_READINESS_PROBE_TIMEOUT_SECONDS")
-	if actlabsReadinessProbeTimeoutSeconds == "" {
-		slog.Error("ACTLABS_READINESS_PROBE_TIMEOUT_SECONDS not set defaulting to 5")
-		actlabsReadinessProbeTimeoutSeconds = "5"
-	}
-	actlabsReadinessProbeTimeoutSecondsInt, err := strconv.ParseInt(actlabsReadinessProbeTimeoutSeconds, 10, 32)
+	actlabsReadinessProbeTimeoutSecondsInt, err := strconv.ParseInt(getEnvWithDefault("ACTLABS_READINESS_PROBE_TIMEOUT_SECONDS", "5"), 10, 32)
 	if err != nil {
-		slog.Error("ACTLABS_READINESS_PROBE_TIMEOUT_SECONDS not set defaulting to 5")
-		actlabsReadinessProbeTimeoutSecondsInt = 5
+		return nil, err
 	}
 
-	actlabsReadinessProbePeriodSeconds := os.Getenv("ACTLABS_READINESS_PROBE_PERIOD_SECONDS")
-	if actlabsReadinessProbePeriodSeconds == "" {
-		slog.Error("ACTLABS_READINESS_PROBE_PERIOD_SECONDS not set defaulting to 5")
-		actlabsReadinessProbePeriodSeconds = "10"
-	}
-	actlabsReadinessProbePeriodSecondsInt, err := strconv.ParseInt(actlabsReadinessProbePeriodSeconds, 10, 32)
+	actlabsReadinessProbePeriodSecondsInt, err := strconv.ParseInt(getEnvWithDefault("ACTLABS_READINESS_PROBE_PERIOD_SECONDS", "10"), 10, 32)
 	if err != nil {
-		slog.Error("ACTLABS_READINESS_PROBE_PERIOD_SECONDS not set defaulting to 10")
-		actlabsReadinessProbePeriodSecondsInt = 10
+		return nil, err
 	}
 
-	actlabsReadinessProbeSuccessThreshold := os.Getenv("ACTLABS_READINESS_PROBE_SUCCESS_THRESHOLD")
-	if actlabsReadinessProbeSuccessThreshold == "" {
-		slog.Error("ACTLABS_READINESS_PROBE_SUCCESS_THRESHOLD not set defaulting to 1")
-		actlabsReadinessProbeSuccessThreshold = "1"
-	}
-	actlabsReadinessProbeSuccessThresholdInt, err := strconv.ParseInt(actlabsReadinessProbeSuccessThreshold, 10, 32)
+	actlabsReadinessProbeSuccessThresholdInt, err := strconv.ParseInt(getEnvWithDefault("ACTLABS_READINESS_PROBE_SUCCESS_THRESHOLD", "1"), 10, 32)
 	if err != nil {
-		slog.Error("ACTLABS_READINESS_PROBE_SUCCESS_THRESHOLD not set defaulting to 1")
-		actlabsReadinessProbeSuccessThresholdInt = 1
+		return nil, err
 	}
 
-	actlabsReadinessProbeFailureThreshold := os.Getenv("ACTLABS_READINESS_PROBE_FAILURE_THRESHOLD")
-	if actlabsReadinessProbeFailureThreshold == "" {
-		slog.Error("ACTLABS_READINESS_PROBE_FAILURE_THRESHOLD not set defaulting to 20")
-		actlabsReadinessProbeFailureThreshold = "20"
-	}
-	actlabsReadinessProbeFailureThresholdInt, err := strconv.ParseInt(actlabsReadinessProbeFailureThreshold, 10, 32)
+	actlabsReadinessProbeFailureThresholdInt, err := strconv.ParseInt(getEnvWithDefault("ACTLABS_READINESS_PROBE_FAILURE_THRESHOLD", "20"), 10, 32)
 	if err != nil {
-		slog.Error("ACTLABS_READINESS_PROBE_FAILURE_THRESHOLD not set defaulting to 20")
-		actlabsReadinessProbeFailureThresholdInt = 20
+		return nil, err
 	}
 
-	serverManagerClientID := os.Getenv("SERVER_MANAGER_CLIENT_ID")
+	serverManagerClientID := getEnv("SERVER_MANAGER_CLIENT_ID")
 	if serverManagerClientID == "" {
-		slog.Error("SERVER_MANAGER_CLIENT_ID not set")
-		os.Exit(1)
+		return nil, fmt.Errorf("SERVER_MANAGER_CLIENT_ID not set")
 	}
 
-	actlabsSubscriptionID := os.Getenv("ACTLABS_SUBSCRIPTION_ID")
+	actlabsSubscriptionID := getEnv("ACTLABS_SUBSCRIPTION_ID")
 	if actlabsSubscriptionID == "" {
-		slog.Error("ACTLABS_SUBSCRIPTION_ID not set")
-		os.Exit(1)
+		return nil, fmt.Errorf("ACTLABS_SUBSCRIPTION_ID not set")
 	}
 
-	actlabsResourceGroup := os.Getenv("ACTLABS_RESOURCE_GROUP")
+	actlabsResourceGroup := getEnv("ACTLABS_RESOURCE_GROUP")
 	if actlabsResourceGroup == "" {
-		slog.Error("ACTLABS_RESOURCE_GROUP not set")
-		os.Exit(1)
+		return nil, fmt.Errorf("ACTLABS_RESOURCE_GROUP not set")
 	}
 
-	actlabsStorageAccount := os.Getenv("ACTLABS_STORAGE_ACCOUNT")
+	actlabsStorageAccount := getEnv("ACTLABS_STORAGE_ACCOUNT")
 	if actlabsStorageAccount == "" {
-		slog.Error("ACTLABS_STORAGE_ACCOUNT not set")
-		os.Exit(1)
+		return nil, fmt.Errorf("ACTLABS_STORAGE_ACCOUNT not set")
 	}
 
-	actlabsServerTableName := os.Getenv("ACTLABS_SERVER_TABLE_NAME")
+	actlabsServerTableName := getEnv("ACTLABS_SERVER_TABLE_NAME")
 	if actlabsServerTableName == "" {
-		slog.Error("ACTLABS_SERVER_TABLE_NAME not set")
-		os.Exit(1)
+		return nil, fmt.Errorf("ACTLABS_SERVER_TABLE_NAME not set")
 	}
 
 	// Retrieve other environment variables and check them as needed
@@ -302,5 +207,20 @@ func NewConfig() *Config {
 		ActlabsStorageAccount:                    actlabsStorageAccount,
 		ActlabsServerTableName:                   actlabsServerTableName,
 		// Set other fields
+	}, nil
+}
+
+func getEnv(env string) string {
+	value := os.Getenv(env)
+	slog.Info("environment variable", slog.String("name", env), slog.String("value", value))
+	return value
+}
+
+func getEnvWithDefault(env string, defaultValue string) string {
+	value := os.Getenv(env)
+	if value == "" {
+		value = defaultValue
 	}
+	slog.Info("environment variable", slog.String("name", env), slog.String("value", value))
+	return value
 }

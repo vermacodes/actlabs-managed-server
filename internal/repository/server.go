@@ -406,17 +406,6 @@ func (s *serverRepository) IsUserOwner(server entity.Server) (bool, error) {
 }
 
 func (s *serverRepository) UpsertServerInDatabase(server entity.Server) error {
-	tableClient, err := s.auth.GetTableClient(
-		s.appConfig.ActlabsSubscriptionID,
-		s.appConfig.ActlabsResourceGroup,
-		s.appConfig.ActlabsStorageAccount,
-		s.appConfig.ActlabsServerTableName,
-	)
-	if err != nil {
-		slog.Error("error creating table client:", err)
-		return fmt.Errorf("error creating table client %w", err)
-	}
-
 	server.PartitionKey = "actlabs"
 	server.RowKey = server.UserPrincipalName
 
@@ -426,7 +415,7 @@ func (s *serverRepository) UpsertServerInDatabase(server entity.Server) error {
 		return fmt.Errorf("error marshalling server %w", err)
 	}
 
-	_, err = tableClient.UpsertEntity(context.Background(), val, nil)
+	_, err = s.auth.ActlabsServersTableClient.UpsertEntity(context.Background(), val, nil)
 	if err != nil {
 		slog.Error("error upserting server:", err)
 		return fmt.Errorf("error upserting server %w", err)
@@ -437,17 +426,7 @@ func (s *serverRepository) UpsertServerInDatabase(server entity.Server) error {
 	return nil
 }
 func (s *serverRepository) GetServerFromDatabase(partitionKey string, rowKey string) (entity.Server, error) {
-	tableClient, err := s.auth.GetTableClient(s.appConfig.ActlabsSubscriptionID,
-		s.appConfig.ActlabsResourceGroup,
-		s.appConfig.ActlabsStorageAccount,
-		s.appConfig.ActlabsServerTableName,
-	)
-	if err != nil {
-		slog.Error("error creating table client:", err)
-		return entity.Server{}, fmt.Errorf("error creating table client %w", err)
-	}
-
-	response, err := tableClient.GetEntity(context.Background(), partitionKey, rowKey, nil)
+	response, err := s.auth.ActlabsServersTableClient.GetEntity(context.Background(), partitionKey, rowKey, nil)
 	if err != nil {
 		slog.Error("error getting server from database:", err)
 		return entity.Server{}, fmt.Errorf("error getting server from database %w", err)
