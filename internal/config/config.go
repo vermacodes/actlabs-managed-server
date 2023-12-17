@@ -210,12 +210,14 @@ func NewConfig() (*Config, error) {
 	}, nil
 }
 
+// Helper function to retrieve the value and log it
 func getEnv(env string) string {
 	value := os.Getenv(env)
 	slog.Info("environment variable", slog.String("name", env), slog.String("value", value))
 	return value
 }
 
+// Helper function to retrieve the value, if none found, set default and log it
 func getEnvWithDefault(env string, defaultValue string) string {
 	value := os.Getenv(env)
 	if value == "" {
